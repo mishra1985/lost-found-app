@@ -1,0 +1,183 @@
+import { Item, Match, Notification, User, ItemCategory } from '../types';
+
+// Mock Users
+export const mockUsers: User[] = [
+  {
+    id: 'user1',
+    username: 'john_doe',
+    email: 'john@example.com',
+    role: 'user',
+    created_at: new Date(2023, 1, 15).toISOString(),
+  },
+  {
+    id: 'user2',
+    username: 'jane_smith',
+    email: 'jane@example.com',
+    role: 'user',
+    created_at: new Date(2023, 2, 20).toISOString(),
+  },
+  {
+    id: 'admin1',
+    username: 'admin',
+    email: 'admin@example.com',
+    role: 'admin',
+    created_at: new Date(2023, 0, 1).toISOString(),
+  },
+];
+
+// Mock Items
+export const mockItems: Item[] = [
+  {
+    id: 'item1',
+    type: 'lost',
+    title: 'iPhone 14 Pro',
+    description: 'Black iPhone 14 Pro with a clear case. Lost in Central Park near the fountain.',
+    category: 'electronics',
+    location: 'Central Park, New York',
+    image_url: 'https://images.pexels.com/photos/5750001/pexels-photo-5750001.jpeg',
+    image_features: Array.from({ length: 64 }, () => Math.random()),
+    text_features: ['iphone', 'black', 'clear case', 'central park', 'fountain'],
+    status: 'pending',
+    reported_by: 'user1',
+    matched_with: null,
+    created_at: new Date(2023, 5, 10).toISOString(),
+    updated_at: new Date(2023, 5, 10).toISOString(),
+  },
+  {
+    id: 'item2',
+    type: 'found',
+    title: 'Black Smartphone',
+    description: 'Found a black smartphone (possibly iPhone) with clear case near Central Park fountain.',
+    category: 'electronics',
+    location: 'Central Park, New York',
+    image_url: 'https://images.pexels.com/photos/699122/pexels-photo-699122.jpeg',
+    image_features: Array.from({ length: 64 }, () => Math.random()),
+    text_features: ['smartphone', 'black', 'clear case', 'central park', 'fountain'],
+    status: 'pending',
+    reported_by: 'user2',
+    matched_with: null,
+    created_at: new Date(2023, 5, 11).toISOString(),
+    updated_at: new Date(2023, 5, 11).toISOString(),
+  },
+  {
+    id: 'item3',
+    type: 'lost',
+    title: 'Gold Ring',
+    description: 'Lost my gold wedding ring at Bryant Park. It has an inscription inside saying "Forever & Always".',
+    category: 'jewelry',
+    location: 'Bryant Park, New York',
+    image_url: 'https://images.pexels.com/photos/10875792/pexels-photo-10875792.jpeg',
+    image_features: Array.from({ length: 64 }, () => Math.random()),
+    text_features: ['gold', 'ring', 'wedding', 'bryant park', 'inscription', 'forever', 'always'],
+    status: 'pending',
+    reported_by: 'user1',
+    matched_with: null,
+    created_at: new Date(2023, 5, 15).toISOString(),
+    updated_at: new Date(2023, 5, 15).toISOString(),
+  },
+  {
+    id: 'item4',
+    type: 'found',
+    title: 'Wedding Ring',
+    description: 'Found a gold wedding ring in Bryant Park. Has some kind of inscription inside.',
+    category: 'jewelry',
+    location: 'Bryant Park, New York',
+    image_url: 'https://images.pexels.com/photos/5816291/pexels-photo-5816291.jpeg',
+    image_features: Array.from({ length: 64 }, () => Math.random()),
+    text_features: ['gold', 'wedding', 'ring', 'bryant park', 'inscription'],
+    status: 'pending',
+    reported_by: 'user2',
+    matched_with: null,
+    created_at: new Date(2023, 5, 16).toISOString(),
+    updated_at: new Date(2023, 5, 16).toISOString(),
+  },
+  {
+    id: 'item5',
+    type: 'lost',
+    title: 'Blue Backpack',
+    description: 'Lost my blue North Face backpack at Grand Central Station. Contains laptop and books.',
+    category: 'accessories',
+    location: 'Grand Central Station, New York',
+    image_url: 'https://images.pexels.com/photos/1294731/pexels-photo-1294731.jpeg',
+    image_features: Array.from({ length: 64 }, () => Math.random()),
+    text_features: ['blue', 'backpack', 'north face', 'grand central', 'laptop', 'books'],
+    status: 'pending',
+    reported_by: 'user2',
+    matched_with: null,
+    created_at: new Date(2023, 5, 20).toISOString(),
+    updated_at: new Date(2023, 5, 20).toISOString(),
+  },
+];
+
+// Mock Matches
+export const mockMatches: Match[] = [
+  {
+    id: 'match1',
+    lost_item: 'item1',
+    found_item: 'item2',
+    match_confidence: 0.89,
+    status: 'pending',
+    admin_notes: null,
+    created_at: new Date(2023, 5, 12).toISOString(),
+  },
+  {
+    id: 'match2',
+    lost_item: 'item3',
+    found_item: 'item4',
+    match_confidence: 0.92,
+    status: 'pending',
+    admin_notes: null,
+    created_at: new Date(2023, 5, 17).toISOString(),
+  },
+];
+
+// Mock Notifications
+export const mockNotifications: Notification[] = [
+  {
+    id: 'notif1',
+    user_id: 'user1',
+    item_id: 'item1',
+    message: 'A potential match has been found for your lost iPhone!',
+    type: 'match',
+    read: false,
+    created_at: new Date(2023, 5, 12).toISOString(),
+  },
+  {
+    id: 'notif2',
+    user_id: 'user2',
+    item_id: 'item2',
+    message: 'Your found item might belong to someone in our system.',
+    type: 'match',
+    read: true,
+    created_at: new Date(2023, 5, 12).toISOString(),
+  },
+  {
+    id: 'notif3',
+    user_id: 'user1',
+    item_id: 'item3',
+    message: 'A potential match has been found for your lost ring!',
+    type: 'match',
+    read: false,
+    created_at: new Date(2023, 5, 17).toISOString(),
+  },
+  {
+    id: 'notif4',
+    user_id: 'admin1',
+    item_id: null,
+    message: 'New matches require your review.',
+    type: 'system',
+    read: false,
+    created_at: new Date(2023, 5, 17).toISOString(),
+  },
+];
+
+// Item Categories
+export const itemCategories: { value: ItemCategory; label: string }[] = [
+  { value: 'electronics', label: 'Electronics' },
+  { value: 'jewelry', label: 'Jewelry' },
+  { value: 'clothing', label: 'Clothing' },
+  { value: 'accessories', label: 'Accessories' },
+  { value: 'documents', label: 'Documents' },
+  { value: 'pets', label: 'Pets' },
+  { value: 'other', label: 'Other' },
+];
