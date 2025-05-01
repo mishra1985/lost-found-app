@@ -101,7 +101,6 @@ export const matchStorage = {
       return null;
     }
     return data!;
-    
   },
   update: async (match: Match): Promise<Match> => {
     const { data, error } = await supabase.from('matches').update(match).eq('id', match.id).select().single();
@@ -112,7 +111,6 @@ export const matchStorage = {
     const { error } = await supabase.from('matches').delete().eq('id', id);
     return !error;
   },
-  
 };
 
 // === NOTIFICATIONS ===

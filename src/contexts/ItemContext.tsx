@@ -2,6 +2,7 @@ import React, { createContext, useContext, useState, useEffect, ReactNode } from
 import { v4 as uuidv4 } from 'uuid';
 import { itemStorage, matchStorage, notificationStorage } from '../utils/supabaseStorage';
 import { Item, ItemFormData, ItemType, User, Match } from '../types';
+import { supabase } from '../utils/supabaseClient';
 import { extractTextFeatures, extractImageFeatures, findPotentialMatches } from '../utils/aiMatching';
 
 interface ItemContextType {
@@ -18,10 +19,7 @@ interface ItemContextType {
 
 const ItemContext = createContext<ItemContextType | undefined>(undefined);
 
-export const ItemProvider: React.FC<{ children: ReactNode; currentUser: User | null }> = ({
-  children,
-  currentUser,
-}) => {
+export const ItemProvider: React.FC<{ children: ReactNode; currentUser: User | null }> = ({ children, currentUser }) => {
   const [items, setItems] = useState<Item[]>([]);
   const [userItems, setUserItems] = useState<Item[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -57,8 +55,30 @@ export const ItemProvider: React.FC<{ children: ReactNode; currentUser: User | n
       let image_url: string | null = null;
       let image_features: number[] | null = null;
 
+      const { data: authData, error: authError } = await supabase.auth.getUser();
+      if (authError || !authData?.user?.id) {
+        throw new Error("User not authenticated");
+      }
+
+      const reported_by = authData.user.id;
+
       if (data.image) {
-        image_url = URL.createObjectURL(data.image);
+        const fileExt = data.image.name.split('.').pop();
+        const fileName = `${uuidv4()}.${fileExt}`;
+        const filePath = `items/${fileName}`;
+
+        const { error: uploadError } = await supabase.storage
+          .from('item-images')
+          .upload(filePath, data.image);
+
+        if (uploadError) throw uploadError;
+
+        const { data: publicUrlData } = supabase
+          .storage
+          .from('item-images')
+          .getPublicUrl(filePath);
+
+        image_url = publicUrlData.publicUrl;
         image_features = await extractImageFeatures(data.image);
       }
 
@@ -75,7 +95,7 @@ export const ItemProvider: React.FC<{ children: ReactNode; currentUser: User | n
         image_features,
         text_features,
         status: 'pending',
-        reported_by: user.id,
+        reported_by,
         matched_with: null,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
@@ -85,11 +105,8 @@ export const ItemProvider: React.FC<{ children: ReactNode; currentUser: User | n
       const existingItems = await itemStorage.getAll();
       const potentialMatches = findPotentialMatches(savedItem, existingItems);
 
-      console.log('🔍 Potential Matches Found:', potentialMatches);
-
       for (const match of potentialMatches.slice(0, 3)) {
         const isLostItemNew = savedItem.type === 'lost';
-
         const matchRecord: Match = {
           id: uuidv4(),
           lost_item: isLostItemNew ? savedItem.id : match.item.id,
@@ -99,10 +116,11 @@ export const ItemProvider: React.FC<{ children: ReactNode; currentUser: User | n
           admin_notes: null,
           created_at: new Date().toISOString(),
         };
+
         await matchStorage.add(matchRecord);
 
-        const lostUser = isLostItemNew ? user.id : match.item.reported_by;
-        const foundUser = isLostItemNew ? match.item.reported_by : user.id;
+        const lostUser = isLostItemNew ? reported_by : match.item.reported_by;
+        const foundUser = isLostItemNew ? match.item.reported_by : reported_by;
 
         await notificationStorage.add({
           id: uuidv4(),
@@ -126,7 +144,7 @@ export const ItemProvider: React.FC<{ children: ReactNode; currentUser: User | n
 
         await notificationStorage.add({
           id: uuidv4(),
-          user_id: 'b68cfe85-e162-4a09-8b88-5c585f6f3c60', // Admin ID
+          user_id: 'b68cfe85-e162-4a09-8b88-5c585f6f3c60',
           item_id: null,
           message: '⚠️ New item match requires your review.',
           type: 'system',
@@ -136,7 +154,9 @@ export const ItemProvider: React.FC<{ children: ReactNode; currentUser: User | n
       }
 
       setItems(prev => [...prev, savedItem]);
-      if (user.id === currentUser?.id) setUserItems(prev => [...prev, savedItem]);
+      if (reported_by === currentUser?.id) {
+        setUserItems(prev => [...prev, savedItem]);
+      }
 
       return savedItem;
 
@@ -171,7 +191,6 @@ export const ItemProvider: React.FC<{ children: ReactNode; currentUser: User | n
       };
       await itemStorage.update(updatedItem);
 
-      // Also update the matched item, if any
       if (matchedItemId) {
         const matchedItem = await itemStorage.getById(matchedItemId);
         if (matchedItem) {
@@ -185,7 +204,6 @@ export const ItemProvider: React.FC<{ children: ReactNode; currentUser: User | n
         }
       }
 
-      // Update local state
       setItems(prev => prev.map(i => i.id === itemId ? updatedItem : i));
       setUserItems(prev => prev.map(i => i.id === itemId ? updatedItem : i));
 
